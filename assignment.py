@@ -6,6 +6,7 @@ print(f'The number of columns: {len(data.columns)}')
 
 
 import pandas as pd
+import numpy as np
 
 # --------------
 # Data splitting
@@ -44,64 +45,94 @@ x, x_test = perform_pca(x, x_test)
 
 assert all(x) <= 1
 
+# ----------
+# Classifier
+# ----------
+def classifier(x_train, x_test, y_train, y_test):
+    # Begin by importing all necessary libraries
+    import pandas as pd
+    from sklearn.metrics import classification_report
+    from sklearn.metrics import confusion_matrix
+    from sklearn.metrics import accuracy_score
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.svm import SVC
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.naive_bayes import GaussianNB
+    from sklearn.model_selection import train_test_split
+
+    SVC_model = SVC()
+    KNN_model = KNeighborsClassifier(n_neighbors=10)
+    LG_model = LogisticRegression(max_iter=10000)
+    DTR_model = DecisionTreeClassifier()
+    RFC_model = RandomForestClassifier()
+    GNB_model = GaussianNB()
+
+    SVC_model.fit(x_train, y_train)
+    KNN_model.fit(x_train, y_train)
+    LG_model.fit(x_train, y_train)
+    DTR_model.fit(x_train, y_train)
+    RFC_model.fit(x_train, y_train)
+    GNB_model.fit(x_train, y_train)
+
+    predictions = {}
+    predictions['SVC_prediction'] = SVC_model.predict(x_test)
+    predictions['KNN_prediction'] = KNN_model.predict(x_test)
+    predictions['LG_prediction'] = LG_model.predict(x_test)
+    predictions['DTR_prediction'] = DTR_model.predict(x_test)
+    predictions['RFC_prediction'] = DTR_model.predict(x_test)
+    predictions['GNB_prediction'] = DTR_model.predict(x_test)
+
+    pred_accuracies = {}
+    for pred in predictions:
+        pred_accuracies[pred] = accuracy_score(predictions[pred], y_test)
+
+    pred_metrics = {}
+    for pred in predictions:
+        pred_metrics[pred] = classification_report(predictions[pred], y_test)
+
+    return predictions, pred_accuracies, pred_metrics
+
+
 # -----------------------
 # K-fold Cross-validation
 # -----------------------
 from sklearn.model_selection import StratifiedKFold
 
-skf = StratifiedKFold(n_splits = 10, shuffle = True)
+k = 10
+skf = StratifiedKFold(n_splits = k, shuffle = True)
+all_pred_accuracies = {}
 for train_index, test_index in skf.split(x, y):
-    x_train, x_test = x.iloc[train_index], x.iloc[test_index]
-    y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+    [predictions, pred_accuracies, pred_metrics] = classifier(x.iloc[train_index],
+                                                              x.iloc[test_index],
+                                                              y.iloc[train_index],
+                                                              y.iloc[test_index])
 
-    # TODO Make sure classifier is run for each fold.
+    if all_pred_accuracies == {}:  # Initialize the dict that's going to hold all predictions
+        all_pred_accuracies = pred_accuracies.copy()
+        for pred_type in pred_accuracies.keys():
+            # Convert dict items to list
+            all_pred_accuracies[pred_type] = [all_pred_accuracies[pred_type]]
+    else:
+        for pred_type in pred_accuracies.keys():
+            # Add accuracy scores to all_predictions dict
+            all_pred_accuracies[pred_type].append(pred_accuracies[pred_type])
 
-# ----------
-# Classifier
-# ----------
-# Begin by importing all necessary libraries
-import pandas as pd
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import train_test_split
+# Print average prediction accuracies
+print(f'Average {k}-fold prediction accuracies:')
+for pred_type in all_pred_accuracies:
+    print(f'{pred_type}: {np.mean(all_pred_accuracies[pred_type])}')
 
-SVC_model = SVC()
-KNN_model = KNeighborsClassifier(n_neighbors=10)
-LG_model = LogisticRegression(max_iter=10000)
-DTR_model = DecisionTreeClassifier()
-RFC_model = RandomForestClassifier()
-GNB_model = GaussianNB()
+# --------------------------
+# Final test on test dataset
+# --------------------------
+run_final_test = False
+if run_final_test:
+    [predictions, pred_accuracies, pred_metrics] = classifier(x_train, x_test, y_train, y_test)
 
-SVC_model.fit(x_train, y_train)
-KNN_model.fit(x_train, y_train)
-LG_model.fit(x_train, y_train)
-DTR_model.fit(x_train, y_train)
-RFC_model.fit(x_train, y_train)
-GNB_model.fit(x_train, y_train)
+    for prediction in pred_accuracies:
+        print(f'{prediction}: {pred_accuracies[prediction]}')
 
-
-SVC_prediction = SVC_model.predict(x_test)
-KNN_prediction = KNN_model.predict(x_test)
-LG_prediction = LG_model.predict(x_test)
-DTR_prediction = DTR_model.predict(x_test)
-RFC_prediction = DTR_model.predict(x_test)
-GNB_prediction = DTR_model.predict(x_test)
-
-# Accuracy score is the simplest way to evaluate
-print(accuracy_score(SVC_prediction, y_test))
-print(accuracy_score(KNN_prediction, y_test))
-print(accuracy_score(LG_prediction, y_test))
-print(accuracy_score(DTR_prediction, y_test))
-print(accuracy_score(RFC_prediction, y_test))
-print(accuracy_score(GNB_prediction, y_test))
-# But Confusion Matrix and Classification Report give more details about performance
-print(classification_report(KNN_prediction, y_test))
-
-print(x)
+    for prediction in pred_metrics:
+        print(f'{prediction}: {pred_metrics[prediction]}')

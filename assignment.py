@@ -90,7 +90,7 @@ def classifier(x_train, x_test, y_train, y_test):
 
     pred_metrics = {}
     for pred in predictions:
-        pred_metrics[pred] = classification_report(predictions[pred], y_test)
+        pred_metrics[pred] = classification_report(predictions[pred], y_test, zero_division=0)
 
     return predictions, pred_accuracies, pred_metrics
 

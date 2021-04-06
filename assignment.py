@@ -50,9 +50,9 @@ labels = data.pop('label')
 x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8, stratify=labels)
 
 # Upsampling training data to achieve 50/50 label split
-df = pd.concat([x,y])
-df_majority = x[x.label==0]
-df_minority = x[x.label==1]
+df = pd.concat([x,y], axis=1)
+df_majority = df[df.label==0]
+df_minority = df[df.label==1]
 
 df_minority_upsampled = resample(df_minority,
                                  replace=True,
@@ -150,7 +150,7 @@ k = 10
 skf = StratifiedKFold(n_splits=k, shuffle=True)
 all_pred_accuracies = {}
 for train_index, test_index in skf.split(x, y):
-    [predictions, pred_accuracies, pred_metrics] = fit_classifier(x.iloc[train_index],
+    [predictions, pred_accuracies, pred_metrics] = classifier(x.iloc[train_index],
                                                                   x.iloc[test_index],
                                                                   y.iloc[train_index],
                                                                   y.iloc[test_index])
@@ -189,18 +189,18 @@ if run_grid_search:
         reg_results = reg_results.sort_values(by=['rank_test_score'])
         return reg_results
 
-    params_SVC = {'C': [0.1, 1, 10, 100, 1000],  
+    params_svc = {'C': [0.1, 1, 10, 100, 1000],  
               'gamma': [1, 0.1, 0.01, 0.001, 0.0001], 
               'kernel': ['rbf','linear','sigmoid']}
-    params_RFC = {'n_estimators': [10,50,100],
+    params_rfc = {'n_estimators': [10,50,100],
                   'min_samples_split': [1,2,5]}
-    reg_results = grid_search_reg(RFC_model, params_RFC)
+    reg_results = grid_search_reg(rfc_model, params_rfc)
     print(reg_results)
 
 # --------------------------
 # Final test on test dataset
 # --------------------------
-RUN_FINAL_TEST = False
+RUN_FINAL_TEST = True
 if RUN_FINAL_TEST:
     [predictions, pred_accuracies, pred_metrics] = classifier(x, x_test, y, y_test)
 

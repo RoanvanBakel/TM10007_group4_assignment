@@ -78,6 +78,13 @@ assert all(x) <= 1
 # Classifier
 # A function is created to test and run multiple classifiers for the given data
 # ----------
+# Define classifier models
+svc_model = SVC()
+knn_model = KNeighborsClassifier(n_neighbors=10)
+lg_model = LogisticRegression(max_iter=10000)
+dtr_model = DecisionTreeClassifier()
+rfc_model = RandomForestClassifier()
+gnb_model = GaussianNB()
 
 def classifier(x_train, x_test, y_train, y_test):
     '''
@@ -94,13 +101,6 @@ def classifier(x_train, x_test, y_train, y_test):
     pred_accuracies, accurary scores
     pred_metrics, multiple scoring values
     '''
-
-    svc_model = SVC()
-    knn_model = KNeighborsClassifier(n_neighbors=10)
-    lg_model = LogisticRegression(max_iter=10000)
-    dtr_model = DecisionTreeClassifier()
-    rfc_model = RandomForestClassifier()
-    gnb_model = GaussianNB()
 
     svc_model.fit(x_train, y_train)
     knn_model.fit(x_train, y_train)

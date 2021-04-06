@@ -1,57 +1,20 @@
-from ecg.load_data import load_data
+'''
+This program runs a set of classifiers to determine predictions outcomes.
+A dataset of ECG features for multiple patients are used to score the prediction models.
+'''
 
-data = load_data()
-print(f'The number of samples: {len(data.index)}')
-print(f'The number of columns: {len(data.columns)}')
 
-
+# Importing pandas and numpy for data processing and overall coding
 import pandas as pd
 import numpy as np
 
-# --------------
-# Data splitting
-# --------------
-from sklearn.model_selection import train_test_split 
-
-labels = data.pop('label')
-
-x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8, stratify=labels) # TODO should we stratify on more than the labels alone?
-
-# ---------------
-# Feature scaling
-# ---------------
-from sklearn.preprocessing import RobustScaler, QuantileTransformer
-scaler = RobustScaler() 
-scaler.fit_transform(x)
-
-
-# ----------------------------------
-# Principal Component Analysis (PCA)
-# ----------------------------------
+# Importing libraries for data splitting, feature selection, different classifiers,
+# and classification metrices
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import RobustScaler, QuantileTransformer  # --> QuantileTransformer unused?
 from sklearn.decomposition import PCA
-
-def perform_pca(train_df, validation_df): # TODO hoor je dit niet alleen op de trainingsset te doen? Maar hoe?
-    # Perform PCA
-    pca = PCA(n_components = .90)
-    principal_components_train = pca.fit_transform(train_df)
-    principal_components_validation = pca.transform(validation_df)
-
-    df_pc_train = pd.DataFrame(data=principal_components_train)
-    df_pc_validation = pd.DataFrame(data=principal_components_validation)
-
-    return df_pc_train, df_pc_validation
-
-x, x_test = perform_pca(x, x_test) 
-
-assert all(x) <= 1
-
-# ----------
-# Classifier
-# ----------
-# Begin by importing all necessary libraries
-import pandas as pd
 from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix  # --> unused?
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -59,30 +22,100 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold
 
-SVC_model = SVC()
-KNN_model = KNeighborsClassifier(n_neighbors=10)
-LG_model = LogisticRegression(max_iter=10000)
-DTR_model = DecisionTreeClassifier()
-RFC_model = RandomForestClassifier()
-GNB_model = GaussianNB()
 
-def fit_classifier(x_train, x_test, y_train, y_test):
-    SVC_model.fit(x_train, y_train)
-    KNN_model.fit(x_train, y_train)
-    LG_model.fit(x_train, y_train)
-    DTR_model.fit(x_train, y_train)
-    RFC_model.fit(x_train, y_train)
-    GNB_model.fit(x_train, y_train)
+# Importing the load_data function from the ecg module
+from ecg.load_data import load_data
+
+
+# --------------
+# Data importing
+# Importing the ECG features dataset
+# --------------
+
+data = load_data()
+print(f'The number of samples: {len(data.index)}')
+print(f'The number of columns: {len(data.columns)}')
+
+
+# --------------
+# Data splitting
+# Data is split in training and test set, where the training set is 80% of the total dataset.
+# Split is stratified based on the given labels.
+# --------------
+
+labels = data.pop('label')
+x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8, stratify=labels)
+
+
+# ---------------
+# Feature scaling
+# The features are scaled using RobustScalar.
+# ---------------
+
+scaler = RobustScaler()
+scaler.fit_transform(x)
+
+
+# ----------------------------------
+# Principal Component Analysis (PCA)
+# Performing the PCA with a total number of components where the accumulated variance
+# sums up to at least 90%.
+# ----------------------------------
+
+pca = PCA(n_components=0.90)
+principal_components_train = pca.fit_transform(x)
+principal_components_test = pca.transform(x_test)
+
+x = pd.DataFrame(data=principal_components_train)
+x_test = pd.DataFrame(data=principal_components_test)
+
+assert all(x) <= 1
+
+
+# ----------
+# Classifier
+# A function is created to test and run multiple classifiers for the given data
+# ----------
+
+def classifier(x_train, x_test, y_train, y_test):
+    '''
+    This function defines multiple classifiers.
+    All classifiers are created, fitted, and the predictions are captured.
+
+    arg1 = x_train, the training data
+    arg2 = x_test, the test data
+    arg3 = y_train, the training labels
+    arg4 = y_test, the test labels
+
+    return:
+    predictions, predictions
+    pred_accuracies, accurary scores
+    pred_metrics, multiple scoring values
+    '''
+
+    svc_model = SVC()
+    knn_model = KNeighborsClassifier(n_neighbors=10)
+    lg_model = LogisticRegression(max_iter=10000)
+    dtr_model = DecisionTreeClassifier()
+    rfc_model = RandomForestClassifier()
+    gnb_model = GaussianNB()
+
+    svc_model.fit(x_train, y_train)
+    knn_model.fit(x_train, y_train)
+    lg_model.fit(x_train, y_train)
+    dtr_model.fit(x_train, y_train)
+    rfc_model.fit(x_train, y_train)
+    gnb_model.fit(x_train, y_train)
 
     predictions = {}
-    predictions['SVC_prediction'] = SVC_model.predict(x_test)
-    predictions['KNN_prediction'] = KNN_model.predict(x_test)
-    predictions['LG_prediction'] = LG_model.predict(x_test)
-    predictions['DTR_prediction'] = DTR_model.predict(x_test)
-    predictions['RFC_prediction'] = DTR_model.predict(x_test)
-    predictions['GNB_prediction'] = DTR_model.predict(x_test)
+    predictions['SVC_prediction'] = svc_model.predict(x_test)
+    predictions['KNN_prediction'] = knn_model.predict(x_test)
+    predictions['LG_prediction'] = lg_model.predict(x_test)
+    predictions['DTR_prediction'] = dtr_model.predict(x_test)
+    predictions['RFC_prediction'] = rfc_model.predict(x_test)
+    predictions['GNB_prediction'] = gnb_model.predict(x_test)
 
     pred_accuracies = {}
     for pred in predictions:
@@ -97,11 +130,11 @@ def fit_classifier(x_train, x_test, y_train, y_test):
 
 # -----------------------
 # K-fold Cross-validation
+# K-fold cross-validation is performed to check for generalization performance of the classifiers.
 # -----------------------
-from sklearn.model_selection import StratifiedKFold
 
 k = 10
-skf = StratifiedKFold(n_splits = k, shuffle = True)
+skf = StratifiedKFold(n_splits=k, shuffle=True)
 all_pred_accuracies = {}
 for train_index, test_index in skf.split(x, y):
     [predictions, pred_accuracies, pred_metrics] = fit_classifier(x.iloc[train_index],
@@ -154,10 +187,9 @@ if run_grid_search:
 # --------------------------
 # Final test on test dataset
 # --------------------------
-
-run_final_test = False
-if run_final_test:
-    [predictions, pred_accuracies, pred_metrics] = classifier(x_train, x_test, y_train, y_test)
+RUN_FINAL_TEST = False
+if RUN_FINAL_TEST:
+    [predictions, pred_accuracies, pred_metrics] = classifier(x, x_test, y, y_test)
 
     for prediction in pred_accuracies:
         print(f'{prediction}: {pred_accuracies[prediction]}')

@@ -23,6 +23,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import StratifiedKFold
+from sklearn.utils import resample
 
 
 # Importing the load_data function from the ecg module
@@ -48,6 +49,18 @@ print(f'The number of columns: {len(data.columns)}')
 labels = data.pop('label')
 x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8, stratify=labels)
 
+# Upsampling training data to achieve 50/50 label split
+df = pd.concat([x,y])
+df_majority = x[x.label==0]
+df_minority = x[x.label==1]
+
+df_minority_upsampled = resample(df_minority,
+                                 replace=True,
+                                 n_samples=len(df_majority.index),
+                                 random_state=123)
+
+x = pd.concat([df_majority, df_minority_upsampled])
+y = x.pop('label')
 
 # ---------------
 # Feature scaling

@@ -11,10 +11,10 @@ import numpy as np
 # Importing libraries for data splitting, feature selection, different classifiers,
 # and classification metrices
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, RobustScaler, QuantileTransformer  # --> QuantileTransformer unused?
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix  # --> unused?
+from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC

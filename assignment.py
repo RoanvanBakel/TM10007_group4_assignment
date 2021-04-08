@@ -98,15 +98,15 @@ dtr_model = DecisionTreeClassifier()
 rfc_model = RandomForestClassifier()
 gnb_model = GaussianNB()
 
-def classifier(x_train, x_test, y_train, y_test):
+def classifier(x_train, x_val_test, y_train, y_val_test):
     '''
     This function defines multiple classifiers.
     All classifiers are created, fitted, and the predictions are captured.
 
     arg1 = x_train, the training data
-    arg2 = x_test, the validation/test data
+    arg2 = x_val_test, the validation/test data
     arg3 = y_train, the training labels
-    arg4 = y_test, the validation/test labels
+    arg4 = y_val_test, the validation/test labels
 
     return:
     predictions, predictions
@@ -122,20 +122,20 @@ def classifier(x_train, x_test, y_train, y_test):
     gnb_model.fit(x_train, y_train)
 
     predictions = {}
-    predictions['SVC_prediction'] = svc_model.predict(x_test)
-    predictions['KNN_prediction'] = knn_model.predict(x_test)
-    predictions['LG_prediction'] = lg_model.predict(x_test)
-    predictions['DTR_prediction'] = dtr_model.predict(x_test)
-    predictions['RFC_prediction'] = rfc_model.predict(x_test)
-    predictions['GNB_prediction'] = gnb_model.predict(x_test)
+    predictions['SVC_prediction'] = svc_model.predict(x_val_test)
+    predictions['KNN_prediction'] = knn_model.predict(x_val_test)
+    predictions['LG_prediction'] = lg_model.predict(x_val_test)
+    predictions['DTR_prediction'] = dtr_model.predict(x_val_test)
+    predictions['RFC_prediction'] = rfc_model.predict(x_val_test)
+    predictions['GNB_prediction'] = gnb_model.predict(x_val_test)
 
     pred_accuracies = {}
     for pred in predictions:
-        pred_accuracies[pred] = accuracy_score(predictions[pred], y_test)
+        pred_accuracies[pred] = accuracy_score(predictions[pred], y_val_test)
 
     pred_metrics = {}
     for pred in predictions:
-        pred_metrics[pred] = classification_report(predictions[pred], y_test, zero_division=0)
+        pred_metrics[pred] = classification_report(predictions[pred], y_val_test, zero_division=0)
 
     return predictions, pred_accuracies, pred_metrics
 

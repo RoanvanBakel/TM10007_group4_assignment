@@ -98,7 +98,7 @@ dtr_model = DecisionTreeClassifier()
 rfc_model = RandomForestClassifier()
 gnb_model = GaussianNB()
 
-def classifier(x_train, x_val_test, y_train, y_val_test):
+def fit_classifier(x_train, x_val_test, y_train, y_val_test):
     '''
     This function defines multiple classifiers.
     All classifiers are created, fitted, and the predictions are captured.
@@ -148,7 +148,7 @@ k = 10
 skf = StratifiedKFold(n_splits=k, shuffle=True)
 all_pred_accuracies = {}
 for train_index, test_index in skf.split(x, y):
-    [predictions, pred_accuracies, pred_metrics] = classifier(x.iloc[train_index],
+    [predictions, pred_accuracies, pred_metrics] = fit_classifier(x.iloc[train_index],
                                                                   x.iloc[test_index],
                                                                   y.iloc[train_index],
                                                                   y.iloc[test_index])
@@ -205,7 +205,7 @@ if run_grid_search:
 # --------------------------
 RUN_FINAL_TEST = True
 if RUN_FINAL_TEST:
-    [predictions, pred_accuracies, pred_metrics] = classifier(x, x_test, y, y_test)
+    [predictions, pred_accuracies, pred_metrics] = fit_classifier(x, x_test, y, y_test)
 
     for prediction in pred_accuracies:
         print(f'{prediction}: {pred_accuracies[prediction]}')

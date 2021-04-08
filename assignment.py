@@ -24,6 +24,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils import resample
+from sklearn.preprocessing import MinMaxScaler
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -56,7 +57,7 @@ x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=
 # The features are scaled using RobustScalar.
 # ---------------
 
-scaler = StandardScaler()
+scaler = MinMaxScaler()
 scaler.fit_transform(x)
 scaler.transform(x_test)
 
@@ -82,8 +83,8 @@ y = pd.DataFrame(data=y, columns=['label'])
 # A function is created to test and run multiple classifiers for the given data
 # ----------
 # Define classifier models
-svc_model = SVC()
-rfc_model = RandomForestClassifier()
+svc_model = SVC(C=10)
+rfc_model = RandomForestClassifier(n_estimators = 50)
 
 
 def classifier(x_train, x_test, y_train, y_test):
@@ -159,12 +160,11 @@ for train_index, test_index in skf.split(x, y):
 
 boxplt = pd.DataFrame(all_pred_accuracies)
 
-sns.set(context='notebook', style='whitegrid')
+sns.set(context='notebook', style='whitegrid', font_scale = 2)
 
 
 #Plot the graph
 plot = sns.boxplot(data=boxplt, whis=np.inf, width=.18)
-sns.set(font_scale = 2)
 plot.set(title ='Boxplot of accuracy for SVM and RFC after cross-validation',
          xlabel='Classifier',ylabel='Accuracy',)
 plt.show()
@@ -218,5 +218,7 @@ if RUN_FINAL_TEST:
     for prediction in pred_metrics:
         print(f'{prediction}: {pred_metrics[prediction]}')
 
+    plot_confusion_matrix(svc_model, x_test, y_test)
+    plt.show()
     plot_confusion_matrix(rfc_model, x_test, y_test)
     plt.show()

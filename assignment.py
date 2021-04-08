@@ -30,26 +30,27 @@ from sklearn.utils import resample
 from ecg.load_data import load_data
 
 
-# --------------
+# ----------------------------------
 # Data importing
+# ----------------------------------
 # Importing the ECG features dataset
-# --------------
-
 data = load_data()
 print(f'The number of samples: {len(data.index)}')
 print(f'The number of columns: {len(data.columns)}')
 
 
-# --------------
+# -------------------------------------------------------------------------------------------
 # Data splitting
+# -------------------------------------------------------------------------------------------
 # Data is split in training and test set, where the training set is 80% of the total dataset.
 # Split is stratified based on the given labels.
-# --------------
-
 labels = data.pop('label')
 x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8, stratify=labels)
 
-# Upsampling training data to achieve 50/50 label split
+# ------------------------------------------------------
+# Upsampling
+# ------------------------------------------------------
+# Upsampling training data to achieve 50/50 label split.
 df = pd.concat([x,y], axis=1)
 df_majority = df[df.label==0]
 df_minority = df[df.label==1]
@@ -62,22 +63,20 @@ df_minority_upsampled = resample(df_minority,
 x = pd.concat([df_majority, df_minority_upsampled])
 y = x.pop('label')
 
-# ---------------
+# ---------------------------------------------
 # Feature scaling
-# The features are scaled using RobustScalar.
-# ---------------
-
+# ---------------------------------------------
+# The features are scaled using StandardScaler.
 scaler = StandardScaler()
 scaler.fit_transform(x)
 scaler.transform(x_test)
 
 
-# ----------------------------------
+# ----------------------------------------------------------------------------------
 # Principal Component Analysis (PCA)
+# -----------------------------------------------------------------------------------
 # Performing the PCA with a total number of components where the accumulated variance
 # sums up to at least 90%.
-# ----------------------------------
-
 pca = PCA(n_components=0.95)
 principal_components_train = pca.fit_transform(x)
 principal_components_test = pca.transform(x_test)
@@ -86,10 +85,11 @@ x = pd.DataFrame(data=principal_components_train)
 x_test = pd.DataFrame(data=principal_components_test)
 
 
-# ----------
+# -----------------------------------------------------------------------------
 # Classifier
+# -----------------------------------------------------------------------------
 # A function is created to test and run multiple classifiers for the given data
-# ----------
+
 # Define classifier models
 svc_model = SVC()
 knn_model = KNeighborsClassifier(n_neighbors=10)
@@ -104,9 +104,9 @@ def classifier(x_train, x_test, y_train, y_test):
     All classifiers are created, fitted, and the predictions are captured.
 
     arg1 = x_train, the training data
-    arg2 = x_test, the test data
+    arg2 = x_test, the validation/test data
     arg3 = y_train, the training labels
-    arg4 = y_test, the test labels
+    arg4 = y_test, the validation/test labels
 
     return:
     predictions, predictions
@@ -140,11 +140,10 @@ def classifier(x_train, x_test, y_train, y_test):
     return predictions, pred_accuracies, pred_metrics
 
 
-# -----------------------
+# ------------------------------------------------------------------------------------------------
 # K-fold Cross-validation
+# ------------------------------------------------------------------------------------------------
 # K-fold cross-validation is performed to check for generalization performance of the classifiers.
-# -----------------------
-
 k = 10
 skf = StratifiedKFold(n_splits=k, shuffle=True)
 all_pred_accuracies = {}
@@ -169,9 +168,10 @@ print(f'Average {k}-fold prediction accuracies:')
 for pred_type in all_pred_accuracies:
     print(f'{pred_type}: {np.mean(all_pred_accuracies[pred_type])}')
 
-# ------------------------
+# -------------------------------------------------------
 # Grid Search Optimization
-# ------------------------
+# -------------------------------------------------------
+# For determining the optimal classifier hyperparameters.
 run_grid_search = True
 if run_grid_search:
     def grid_search_reg(model, params):

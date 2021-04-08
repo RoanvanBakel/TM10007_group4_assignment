@@ -85,8 +85,6 @@ principal_components_test = pca.transform(x_test)
 x = pd.DataFrame(data=principal_components_train)
 x_test = pd.DataFrame(data=principal_components_test)
 
-assert all(x) <= 1
-
 
 # ----------
 # Classifier
@@ -174,7 +172,7 @@ for pred_type in all_pred_accuracies:
 # --------------------------
 # Grid Search Regularization
 # --------------------------
-run_grid_search = False
+run_grid_search = True
 if run_grid_search:
     def grid_search_reg(model, params):
         from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
@@ -190,11 +188,15 @@ if run_grid_search:
         reg_results = reg_results.sort_values(by=['rank_test_score'])
         return reg_results
 
-    params_svc = {'C': [0.1, 1, 10, 100, 1000],  
-              'gamma': [1, 0.1, 0.01, 0.001, 0.0001], 
-              'kernel': ['rbf','linear','sigmoid']}
-    params_rfc = {'n_estimators': [10,50,100],
-                  'min_samples_split': [1,2,5]}
+    params_svc = {'C': [0.1, 1, 10],
+                  'degree': [2, 3, 4, 5], 
+                  'kernel': ['rbf', 'linear', 'poly', 'sigmoid']}
+    params_rfc = {'n_estimators': [10, 50, 100],
+                  'min_samples_split': [1, 2, 5]}
+    
+    reg_results = grid_search_reg(svc_model, params_svc)
+    print(reg_results)
+
     reg_results = grid_search_reg(rfc_model, params_rfc)
     print(reg_results)
 

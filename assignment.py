@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, RobustScaler, QuantileTransformer  # --> QuantileTransformer unused?
 from sklearn.decomposition import PCA
 from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix  # --> unused?
+from sklearn.metrics import plot_confusion_matrix  # --> unused?
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -24,6 +24,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils import resample
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 # Importing the load_data function from the ecg module
@@ -49,19 +51,6 @@ print(f'The number of columns: {len(data.columns)}')
 labels = data.pop('label')
 x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8, stratify=labels)
 
-# Upsampling training data to achieve 50/50 label split
-df = pd.concat([x,y], axis=1)
-df_majority = df[df.label==0]
-df_minority = df[df.label==1]
-
-df_minority_upsampled = resample(df_minority,
-                                 replace=True,
-                                 n_samples=len(df_majority.index),
-                                 random_state=123)
-
-x = pd.concat([df_majority, df_minority_upsampled])
-y = x.pop('label')
-
 # ---------------
 # Feature scaling
 # The features are scaled using RobustScalar.
@@ -84,6 +73,8 @@ principal_components_test = pca.transform(x_test)
 
 x = pd.DataFrame(data=principal_components_train)
 x_test = pd.DataFrame(data=principal_components_test)
+y = y.values.tolist()
+y = pd.DataFrame(data=y, columns=['label'])
 
 
 # ----------
@@ -92,11 +83,8 @@ x_test = pd.DataFrame(data=principal_components_test)
 # ----------
 # Define classifier models
 svc_model = SVC()
-knn_model = KNeighborsClassifier(n_neighbors=10)
-lg_model = LogisticRegression(max_iter=10000)
-dtr_model = DecisionTreeClassifier()
 rfc_model = RandomForestClassifier()
-gnb_model = GaussianNB()
+
 
 def classifier(x_train, x_test, y_train, y_test):
     '''
@@ -114,20 +102,25 @@ def classifier(x_train, x_test, y_train, y_test):
     pred_metrics, multiple scoring values
     '''
 
+    # Upsampling training data to achieve 50/50 label split
+    df = pd.concat([x_train,y_train], axis=1)
+    df_majority = df[df.label==0]
+    df_minority = df[df.label==1]
+
+    df_minority_upsampled = resample(df_minority,
+                                     replace=True,
+                                     n_samples=len(df_majority.index),
+                                     random_state=123)
+
+    x_train = pd.concat([df_majority, df_minority_upsampled])
+    y_train = x_train.pop('label')
+    
     svc_model.fit(x_train, y_train)
-    knn_model.fit(x_train, y_train)
-    lg_model.fit(x_train, y_train)
-    dtr_model.fit(x_train, y_train)
     rfc_model.fit(x_train, y_train)
-    gnb_model.fit(x_train, y_train)
 
     predictions = {}
     predictions['SVC_prediction'] = svc_model.predict(x_test)
-    predictions['KNN_prediction'] = knn_model.predict(x_test)
-    predictions['LG_prediction'] = lg_model.predict(x_test)
-    predictions['DTR_prediction'] = dtr_model.predict(x_test)
     predictions['RFC_prediction'] = rfc_model.predict(x_test)
-    predictions['GNB_prediction'] = gnb_model.predict(x_test)
 
     pred_accuracies = {}
     for pred in predictions:
@@ -150,9 +143,9 @@ skf = StratifiedKFold(n_splits=k, shuffle=True)
 all_pred_accuracies = {}
 for train_index, test_index in skf.split(x, y):
     [predictions, pred_accuracies, pred_metrics] = classifier(x.iloc[train_index],
-                                                                  x.iloc[test_index],
-                                                                  y.iloc[train_index],
-                                                                  y.iloc[test_index])
+                                                              x.iloc[test_index],
+                                                              y.iloc[train_index],
+                                                              y.iloc[test_index])
 
     if all_pred_accuracies == {}:  # Initialize the dict that's going to hold all predictions
         all_pred_accuracies = pred_accuracies.copy()
@@ -164,7 +157,19 @@ for train_index, test_index in skf.split(x, y):
             # Add accuracy scores to all_predictions dict
             all_pred_accuracies[pred_type].append(pred_accuracies[pred_type])
 
-# Print average prediction accuracies
+boxplt = pd.DataFrame(all_pred_accuracies)
+
+sns.set(context='notebook', style='whitegrid')
+
+
+#Plot the graph
+plot = sns.boxplot(data=boxplt, whis=np.inf, width=.18)
+sns.set(font_scale = 2)
+plot.set(title ='Boxplot of accuracy for SVM and RFC after cross-validation',
+         xlabel='Classifier',ylabel='Accuracy',)
+plt.show()
+
+
 print(f'Average {k}-fold prediction accuracies:')
 for pred_type in all_pred_accuracies:
     print(f'{pred_type}: {np.mean(all_pred_accuracies[pred_type])}')
@@ -172,7 +177,7 @@ for pred_type in all_pred_accuracies:
 # --------------------------
 # Grid Search Regularization
 # --------------------------
-run_grid_search = True
+run_grid_search = False
 if run_grid_search:
     def grid_search_reg(model, params):
         from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
@@ -212,3 +217,6 @@ if RUN_FINAL_TEST:
 
     for prediction in pred_metrics:
         print(f'{prediction}: {pred_metrics[prediction]}')
+
+    plot_confusion_matrix(rfc_model, x_test, y_test)
+    plt.show()

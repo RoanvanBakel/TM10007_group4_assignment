@@ -11,7 +11,7 @@ import numpy as np
 # Importing libraries for data splitting, feature selection, different classifiers,
 # and classification metrices
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import RobustScaler, QuantileTransformer  # --> QuantileTransformer unused?
+from sklearn.preprocessing import StandardScaler, RobustScaler, QuantileTransformer  # --> QuantileTransformer unused?
 from sklearn.decomposition import PCA
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix  # --> unused?
@@ -67,8 +67,9 @@ y = x.pop('label')
 # The features are scaled using RobustScalar.
 # ---------------
 
-scaler = RobustScaler()
+scaler = StandardScaler()
 scaler.fit_transform(x)
+scaler.transform(x_test)
 
 
 # ----------------------------------
@@ -77,7 +78,7 @@ scaler.fit_transform(x)
 # sums up to at least 90%.
 # ----------------------------------
 
-pca = PCA(n_components=0.90)
+pca = PCA(n_components=0.95)
 principal_components_train = pca.fit_transform(x)
 principal_components_test = pca.transform(x_test)
 
@@ -173,7 +174,7 @@ for pred_type in all_pred_accuracies:
 # --------------------------
 # Grid Search Regularization
 # --------------------------
-run_grid_search = True
+run_grid_search = False
 if run_grid_search:
     def grid_search_reg(model, params):
         from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold

@@ -169,9 +169,9 @@ print(f'Average {k}-fold prediction accuracies:')
 for pred_type in all_pred_accuracies:
     print(f'{pred_type}: {np.mean(all_pred_accuracies[pred_type])}')
 
-# --------------------------
-# Grid Search Regularization
-# --------------------------
+# ------------------------
+# Grid Search Optimization
+# ------------------------
 run_grid_search = True
 if run_grid_search:
     def grid_search_reg(model, params):
@@ -190,9 +190,9 @@ if run_grid_search:
 
     params_svc = {'C': [0.1, 1, 10],
                   'degree': [2, 3, 4, 5], 
-                  'kernel': ['rbf', 'linear', 'poly', 'sigmoid']}
+                  'kernel': ['rbf', 'linear', 'poly', 'sigmoid']}  # Be mindful that the linear kernel takes a VERY long time to compute
     params_rfc = {'n_estimators': [10, 50, 100],
-                  'min_samples_split': [1, 2, 5]}
+                  'min_samples_split': [1.0, 2, 5]}  # Function requires 1.0 to be a float.
     
     reg_results = grid_search_reg(svc_model, params_svc)
     print(reg_results)

@@ -175,12 +175,12 @@ print(f'Average {k}-fold prediction accuracies:')
 for pred_type in all_pred_accuracies:
     print(f'{pred_type}: {np.mean(all_pred_accuracies[pred_type])}')
 
-# --------------------------
-# Grid Search Regularization
-# --------------------------
+# ------------------------
+# Grid Search Optimization
+# ------------------------
 run_grid_search = False
 if run_grid_search:
-    def grid_search_reg(model, params):
+    def grid_search_opt(model, params):
         from sklearn.model_selection import GridSearchCV
         from sklearn.utils import parallel_backend
 
@@ -200,10 +200,10 @@ if run_grid_search:
     params_rfc = {'n_estimators': [10, 50, 100],
                   'min_samples_split': [1.0, 2, 5]}  # Function requires 1.0 to be a float.
     
-    reg_results = grid_search_reg(svc_model, params_svc)
+    reg_results = grid_search_opt(svc_model, params_svc)
     print(reg_results)
 
-    reg_results = grid_search_reg(rfc_model, params_rfc)
+    reg_results = grid_search_opt(rfc_model, params_rfc)
     print(reg_results)
 
 # --------------------------

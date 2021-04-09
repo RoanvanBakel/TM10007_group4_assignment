@@ -18,11 +18,12 @@ from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import GridSearchCV
+from sklearn.utils import parallel_backend
 from sklearn.utils import resample
 from sklearn.preprocessing import MinMaxScaler
 import seaborn as sns
 import matplotlib.pyplot as plt
-
 
 # Importing the load_data function from the ecg module
 from ecg.load_data import load_data
@@ -43,15 +44,17 @@ print(f'The number of columns: {len(data.columns)}')
 # Data is split in training and test set, where the training set is 80% of the total dataset.
 # Split is stratified based on the given labels.
 labels = data.pop('label')
-x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8, stratify=labels)
+x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=0.8,
+                                        stratify=labels)
+
 
 # ------------------------------------------------------
 # Upsampling
 # ------------------------------------------------------
 # Upsampling training data to achieve 50/50 label split.
-df = pd.concat([x,y], axis=1)
-df_majority = df[df.label==0]
-df_minority = df[df.label==1]
+df = pd.concat([x, y], axis=1)
+df_majority = df[df.label == 0]
+df_minority = df[df.label == 1]
 
 df_minority_upsampled = resample(df_minority,
                                  replace=True,
@@ -151,17 +154,17 @@ for train_index, test_index in skf.split(x, y):
 
     if all_pred_accuracies == {}:  # Initialize the dict that's going to hold all predictions
         all_pred_accuracies = pred_accuracies.copy()
-        for pred_type in pred_accuracies.keys():
+        for pred_type in pred_accuracies:
             # Convert dict items to list
             all_pred_accuracies[pred_type] = [all_pred_accuracies[pred_type]]
     else:
-        for pred_type in pred_accuracies.keys():
+        for pred_type in pred_accuracies:
             # Add accuracy scores to all_predictions dict
             all_pred_accuracies[pred_type].append(pred_accuracies[pred_type])
 
 boxplt = pd.DataFrame(all_pred_accuracies)
 
-sns.set(context='notebook', style='whitegrid', font_scale = 2)
+sns.set(context='notebook', style='whitegrid', font_scale=2)
 
 
 # Plot the graph
@@ -175,15 +178,19 @@ print(f'Average {k}-fold prediction accuracies:')
 for pred_type in all_pred_accuracies:
     print(f'{pred_type}: {np.mean(all_pred_accuracies[pred_type])}')
 
+
 # ------------------------
 # Grid Search Optimization
 # ------------------------
 run_grid_search = False
 if run_grid_search:
     def grid_search_opt(model, params):
-        from sklearn.model_selection import GridSearchCV
-        from sklearn.utils import parallel_backend
+        '''
+        Performs a grid search optimization on the given model/classifier
+        using the given parameters.
 
+        Returns results as DataFrame
+        '''
         search = GridSearchCV(
             estimator=model, param_grid=params, scoring='accuracy', cv=3
         )
@@ -195,16 +202,19 @@ if run_grid_search:
         return reg_results
 
     params_svc = {'C': [0.1, 1, 10],
-                  'degree': [2, 3, 4, 5], 
-                  'kernel': ['rbf', 'linear', 'poly', 'sigmoid']}  # Be mindful that the linear kernel takes a VERY long time to compute
+                  'degree': [2, 3, 4, 5],
+                  'kernel': ['rbf', 'linear', 'poly', 'sigmoid']}
+    # Be mindful that the linear kernel takes a VERY long time to compute.
+
     params_rfc = {'n_estimators': [10, 50, 100],
                   'min_samples_split': [1.0, 2, 5]}  # Function requires 1.0 to be a float.
-    
+
     reg_results = grid_search_opt(svc_model, params_svc)
     print(reg_results)
 
     reg_results = grid_search_opt(rfc_model, params_rfc)
     print(reg_results)
+
 
 # --------------------------
 # Final test on test dataset
@@ -213,9 +223,11 @@ RUN_FINAL_TEST = True
 if RUN_FINAL_TEST:
     [predictions, pred_accuracies, pred_metrics] = fit_classifier(x, x_test, y, y_test)
 
+    print('Prediction accuracies (test set):')
     for prediction in pred_accuracies:
         print(f'{prediction}: {pred_accuracies[prediction]}')
 
+    print('Prediction metrics (test set):')
     for prediction in pred_metrics:
         print(f'{prediction}: {pred_metrics[prediction]}')
 

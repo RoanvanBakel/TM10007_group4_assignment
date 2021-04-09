@@ -161,7 +161,7 @@ for train_index, test_index in skf.split(x, y):
 
 boxplt = pd.DataFrame(all_pred_accuracies)
 
-sns.set(context='notebook', style='whitegrid', font_scale=2)
+sns.set(context='notebook', style='whitegrid', font_scale = 2)
 
 
 # Plot the graph

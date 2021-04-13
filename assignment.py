@@ -64,6 +64,10 @@ df_minority_upsampled = resample(df_minority,
 x = pd.concat([df_majority, df_minority_upsampled])
 y = x.pop('label')
 
+
+# ---------------
+# Feature scaling
+# ---------------
 scaler = MinMaxScaler()
 scaler.fit_transform(x)
 scaler.transform(x_test)

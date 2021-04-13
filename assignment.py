@@ -52,17 +52,22 @@ x, x_test, y, y_test = train_test_split(data, labels, test_size=0.2, train_size=
 # Upsampling
 # ------------------------------------------------------
 # Upsampling training data to achieve 50/50 label split.
-df = pd.concat([x, y], axis=1)
-df_majority = df[df.label == 0]
-df_minority = df[df.label == 1]
+def upsampler(x, y):
+    df = pd.concat([x, y], axis=1)
+    df_majority = df[df.label == 0]
+    df_minority = df[df.label == 1]
 
-df_minority_upsampled = resample(df_minority,
-                                 replace=True,
-                                 n_samples=len(df_majority.index),
-                                 random_state=123)
+    df_minority_upsampled = resample(df_minority,
+                                    replace=True,
+                                    n_samples=len(df_majority.index),
+                                    random_state=123)
 
-x = pd.concat([df_majority, df_minority_upsampled])
-y = x.pop('label')
+    x = pd.concat([df_majority, df_minority_upsampled])
+    y = x.pop('label')
+
+    return x, y
+
+[x, y] = upsampler(x, y)
 
 
 # ---------------
@@ -114,17 +119,7 @@ def fit_classifier(x_train, x_val_test, y_train, y_val_test):
     '''
 
     # Upsampling training data to achieve 50/50 label split
-    df = pd.concat([x_train, y_train], axis=1)
-    df_majority = df[df.label == 0]
-    df_minority = df[df.label == 1]
-
-    df_minority_upsampled = resample(df_minority,
-                                     replace=True,
-                                     n_samples=len(df_majority.index),
-                                     random_state=123)
-
-    x_train = pd.concat([df_majority, df_minority_upsampled])
-    y_train = x_train.pop('label')
+    [x_train, y_train] = upsampler(x_train, y_train)
     svc_model.fit(x_train, y_train)
     rfc_model.fit(x_train, y_train)
 
